@@ -273,7 +273,7 @@ export type CollectionGroupEvent = BaseEvent<GroupMembership> & {
   name: "collections.add_group" | "collections.remove_group";
   collectionId: string;
   modelId: string;
-  data: { name: string; membershipId: string };
+  data: { membershipId: string };
 };
 
 export type DocumentUserEvent = BaseEvent<UserMembership> & {
@@ -293,9 +293,7 @@ export type DocumentGroupEvent = BaseEvent<GroupMembership> & {
   documentId: string;
   modelId: string;
   data: {
-    name: string;
     isNew?: boolean;
-    permission?: DocumentPermission;
     membershipId: string;
   };
 };
@@ -343,9 +341,6 @@ export type GroupUserEvent = BaseEvent<UserMembership> & {
   name: "groups.add_user" | "groups.remove_user";
   userId: string;
   modelId: string;
-  data: {
-    name: string;
-  };
 };
 
 export type GroupEvent = BaseEvent<Group> &
@@ -354,9 +349,6 @@ export type GroupEvent = BaseEvent<Group> &
     | {
         name: "groups.create" | "groups.delete" | "groups.update";
         modelId: string;
-        data: {
-          name: string;
-        };
       }
   );
 
@@ -424,9 +416,6 @@ export type ShareEvent = BaseEvent<Share> & {
   modelId: string;
   documentId: string;
   collectionId?: string;
-  data: {
-    name: string;
-  };
 };
 
 export type SubscriptionEvent = BaseEvent<Subscription> & {

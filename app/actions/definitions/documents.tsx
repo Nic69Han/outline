@@ -32,6 +32,7 @@ import {
 } from "outline-icons";
 import * as React from "react";
 import { toast } from "sonner";
+import Icon from "@shared/components/Icon";
 import {
   ExportContentType,
   TeamPreference,
@@ -45,8 +46,7 @@ import DocumentPermanentDelete from "~/scenes/DocumentPermanentDelete";
 import DocumentPublish from "~/scenes/DocumentPublish";
 import DeleteDocumentsInTrash from "~/scenes/Trash/components/DeleteDocumentsInTrash";
 import ConfirmationDialog from "~/components/ConfirmationDialog";
-import DuplicateDialog from "~/components/DuplicateDialog";
-import Icon from "~/components/Icon";
+import DocumentCopy from "~/components/DocumentCopy";
 import MarkdownIcon from "~/components/Icons/MarkdownIcon";
 import SharePopover from "~/components/Sharing/Document";
 import { getHeaderExpandedKey } from "~/components/Sidebar/components/Header";
@@ -562,7 +562,7 @@ export const duplicateDocument = createAction({
     stores.dialogs.openModal({
       title: t("Copy document"),
       content: (
-        <DuplicateDialog
+        <DocumentCopy
           document={document}
           onSubmit={(response) => {
             stores.dialogs.closeAllModals();
@@ -732,7 +732,6 @@ export const importDocument = createAction({
         history.push(document.url);
       } catch (err) {
         toast.error(err.message);
-        throw err;
       }
     };
 
@@ -1054,7 +1053,7 @@ export const openDocumentComments = createAction({
       return;
     }
 
-    stores.ui.toggleComments(activeDocumentId);
+    stores.ui.toggleComments();
   },
 });
 

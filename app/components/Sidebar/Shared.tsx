@@ -3,16 +3,16 @@ import { SidebarIcon } from "outline-icons";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import styled from "styled-components";
+import { hover } from "@shared/styles";
 import { NavigationNode } from "@shared/types";
+import { metaDisplay } from "@shared/utils/keyboard";
 import Flex from "~/components/Flex";
 import Scrollable from "~/components/Scrollable";
 import SearchPopover from "~/components/SearchPopover";
 import Tooltip from "~/components/Tooltip";
 import useCurrentUser from "~/hooks/useCurrentUser";
 import useStores from "~/hooks/useStores";
-import { hover } from "~/styles";
 import history from "~/utils/history";
-import { metaDisplay } from "~/utils/keyboard";
 import { homePath, sharedDocumentPath } from "~/utils/routeHelpers";
 import { useTeamContext } from "../TeamContext";
 import TeamLogo from "../TeamLogo";
@@ -67,6 +67,7 @@ function SharedSidebar({ rootNode, shareId }: Props) {
             depth={0}
             shareId={shareId}
             node={rootNode}
+            prefetchDocument={documents.prefetchDocument}
             activeDocumentId={ui.activeDocumentId}
             activeDocument={documents.active}
           />
@@ -81,11 +82,7 @@ const ToggleSidebar = () => {
   const { ui } = useStores();
 
   return (
-    <Tooltip
-      content={t("Toggle sidebar")}
-      shortcut={`${metaDisplay}+.`}
-      delay={500}
-    >
+    <Tooltip content={t("Toggle sidebar")} shortcut={`${metaDisplay}+.`}>
       <ToggleButton
         position="bottom"
         image={<SidebarIcon />}

@@ -79,19 +79,25 @@ export default class FindAndReplaceExtension extends Extension {
   }
 
   private get decorations() {
-    return this.results.map((deco, index) =>
-      Decoration.inline(deco.from, deco.to, {
+    return this.results.map((deco, index) => {
+      const decorationType =
+        deco.type === "node" ? Decoration.node : Decoration.inline;
+      return decorationType(deco.from, deco.to, {
         class:
           this.options.resultClassName +
           (this.currentResultIndex === index
             ? ` ${this.options.resultCurrentClassName}`
             : ""),
-      })
-    );
+      });
+    });
   }
 
   public replace(replace: string): Command {
     return (state, dispatch) => {
+      // Redo the search to ensure we have the latest results, the document may
+      // have changed underneath us since the last search.
+      this.search(state.doc);
+
       const result = this.results[this.currentResultIndex];
 
       if (!result) {
@@ -106,7 +112,12 @@ export default class FindAndReplaceExtension extends Extension {
   }
 
   public replaceAll(replace: string): Command {
-    return ({ tr }, dispatch) => {
+    return (state, dispatch) => {
+      // Redo the search to ensure we have the latest results, the document may
+      // have changed underneath us since the last search.
+      this.search(state.doc);
+
+      const tr = state.tr;
       let offset: number | undefined;
 
       if (!this.results.length) {
@@ -166,7 +177,7 @@ export default class FindAndReplaceExtension extends Extension {
   private goToMatch(direction: number): Command {
     return (state, dispatch) => {
       if (direction > 0) {
-        if (this.currentResultIndex === this.results.length - 1) {
+        if (this.currentResultIndex >= this.results.length - 1) {
           this.currentResultIndex = 0;
         } else {
           this.currentResultIndex += 1;
@@ -203,11 +214,12 @@ export default class FindAndReplaceExtension extends Extension {
 
     const { from: currentFrom, to: currentTo } = this.results[index];
     const offset = currentTo - currentFrom - replace.length + lastOffset;
-    const { from, to } = this.results[nextIndex];
+    const { from, to, type } = this.results[nextIndex];
 
     this.results[nextIndex] = {
       to: to - offset,
       from: from - offset,
+      type,
     };
 
     return offset;
@@ -215,10 +227,19 @@ export default class FindAndReplaceExtension extends Extension {
 
   private search(doc: Node) {
     this.results = [];
-    const mergedTextNodes: {
-      text: string | undefined;
-      pos: number;
-    }[] = [];
+    const mergedTextNodes: (
+      | {
+          text: string | undefined;
+          pos: number;
+          type: "inline";
+        }
+      | {
+          text: string | undefined;
+          pos: number;
+          type: "node";
+          nodeSize: number;
+        }
+    )[] = [];
     let index = 0;
 
     if (!this.searchTerm) {
@@ -229,21 +250,32 @@ export default class FindAndReplaceExtension extends Extension {
       if (node.isText) {
         if (mergedTextNodes[index]) {
           mergedTextNodes[index] = {
+            type: "inline",
             text: mergedTextNodes[index].text + (node.text ?? ""),
             pos: mergedTextNodes[index].pos,
           };
         } else {
           mergedTextNodes[index] = {
+            type: "inline",
             text: node.text,
             pos,
           };
         }
+      } else if (node.type.name === "mention") {
+        mergedTextNodes[++index] = {
+          type: "node",
+          nodeSize: node.nodeSize,
+          text: node.attrs.label,
+          pos,
+        };
+        ++index;
       } else {
-        index += 1;
+        ++index;
       }
     });
 
-    mergedTextNodes.forEach(({ text = "", pos }) => {
+    mergedTextNodes.forEach((node) => {
+      const { text = "", pos, type } = node;
       try {
         let m;
         const search = this.findRegExp;
@@ -256,12 +288,17 @@ export default class FindAndReplaceExtension extends Extension {
           }
 
           // Reconstruct the correct match position
-          const i = m.index > text.length ? m.index - text.length : m.index;
+          const i = m.index >= text.length ? m.index - text.length : m.index;
+          const from = type === "inline" ? pos + i : pos;
+          const to = from + (type === "inline" ? m[0].length : node.nodeSize);
 
-          this.results.push({
-            from: pos + i,
-            to: pos + i + m[0].length,
-          });
+          // Check if already exists in results, possible due to duplicated
+          // search string on L257
+          if (this.results.some((r) => r.from === from && r.to === to)) {
+            continue;
+          }
+
+          this.results.push({ from, to, type });
         }
       } catch (e) {
         // Invalid RegExp
@@ -318,6 +355,8 @@ export default class FindAndReplaceExtension extends Extension {
 
   public widget = ({ readOnly }: WidgetProps) => (
     <FindAndReplace
+      currentIndex={this.currentResultIndex}
+      totalResults={this.results.length}
       readOnly={readOnly}
       open={this.open}
       onOpen={() => {
@@ -332,7 +371,11 @@ export default class FindAndReplaceExtension extends Extension {
   @observable
   private open = false;
 
-  private results: { from: number; to: number }[] = [];
+  @observable
+  private results: { from: number; to: number; type: "inline" | "node" }[] = [];
+
+  @observable
   private currentResultIndex = 0;
+
   private searchTerm = "";
 }

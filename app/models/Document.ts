@@ -31,6 +31,7 @@ import View from "./View";
 import ArchivableModel from "./base/ArchivableModel";
 import Field from "./decorators/Field";
 import Relation from "./decorators/Relation";
+import { Searchable } from "./interfaces/Searchable";
 
 type SaveOptions = JSONObject & {
   publish?: boolean;
@@ -38,7 +39,7 @@ type SaveOptions = JSONObject & {
   autosave?: boolean;
 };
 
-export default class Document extends ArchivableModel {
+export default class Document extends ArchivableModel implements Searchable {
   static modelName = "Document";
 
   constructor(fields: Record<string, any>, store: DocumentsStore) {
@@ -65,10 +66,6 @@ export default class Document extends ArchivableModel {
 
   store: DocumentsStore;
 
-  @Field
-  @observable
-  id: string;
-
   @observable.shallow
   data: ProsemirrorData;
 
@@ -88,6 +85,11 @@ export default class Document extends ArchivableModel {
     /** The name of the file this document was imported from. */
     fileName?: string;
   };
+
+  @computed
+  get searchContent(): string {
+    return this.title;
+  }
 
   /**
    * The name of the original data source, if imported.
@@ -577,6 +579,8 @@ export default class Document extends ArchivableModel {
     title?: string;
     publish?: boolean;
     recursive?: boolean;
+    collectionId?: string | null;
+    parentDocumentId?: string;
   }) => this.store.duplicate(this, options);
 
   /**

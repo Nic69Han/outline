@@ -1,8 +1,8 @@
 import { Optional } from "utility-types";
+import { ProsemirrorHelper } from "@shared/utils/ProsemirrorHelper";
+import { TextHelper } from "@shared/utils/TextHelper";
 import { Document, Event, User } from "@server/models";
 import { DocumentHelper } from "@server/models/helpers/DocumentHelper";
-import { ProsemirrorHelper } from "@server/models/helpers/ProsemirrorHelper";
-import { TextHelper } from "@server/models/helpers/TextHelper";
 import { APIContext } from "@server/types";
 
 type Props = Optional<
@@ -35,8 +35,8 @@ type Props = Optional<
 };
 
 export default async function documentCreator({
-  title = "",
-  text = "",
+  title,
+  text,
   icon,
   color,
   state,
@@ -101,14 +101,20 @@ export default async function documentCreator({
       fullWidth: templateDocument ? templateDocument.fullWidth : fullWidth,
       icon: templateDocument ? templateDocument.icon : icon,
       color: templateDocument ? templateDocument.color : color,
-      title: TextHelper.replaceTemplateVariables(
-        templateDocument ? templateDocument.title : title,
-        user
-      ),
-      text: TextHelper.replaceTemplateVariables(
-        templateDocument ? templateDocument.text : text,
-        user
-      ),
+      title:
+        title ??
+        (templateDocument
+          ? template
+            ? templateDocument.title
+            : TextHelper.replaceTemplateVariables(templateDocument.title, user)
+          : ""),
+      text:
+        text ??
+        (templateDocument
+          ? template
+            ? templateDocument.text
+            : TextHelper.replaceTemplateVariables(templateDocument.text, user)
+          : ""),
       content: templateDocument
         ? ProsemirrorHelper.replaceTemplateVariables(
             await DocumentHelper.toJSON(templateDocument),

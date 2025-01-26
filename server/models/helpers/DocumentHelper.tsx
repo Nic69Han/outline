@@ -3,6 +3,7 @@ import { Node } from "prosemirror-model";
 import { updateYFragment, yDocToProsemirrorJSON } from "y-prosemirror";
 import * as Y from "yjs";
 import textBetween from "@shared/editor/lib/textBetween";
+import { getTextSerializers } from "@shared/editor/lib/textSerializers";
 import { EditorStyleHelper } from "@shared/editor/styles/EditorStyleHelper";
 import { IconType, ProsemirrorData } from "@shared/types";
 import { determineIconType } from "@shared/utils/icon";
@@ -132,10 +133,10 @@ export class DocumentHelper {
    * Returns the document as plain text. This method uses the
    * collaborative state if available, otherwise it falls back to Markdown.
    *
-   * @param document The document or revision to convert
+   * @param document The document or revision or prosemirror data to convert
    * @returns The document content as plain text without formatting.
    */
-  static toPlainText(document: Document | Revision) {
+  static toPlainText(document: Document | Revision | ProsemirrorData) {
     const node = DocumentHelper.toProsemirror(document);
 
     return textBetween(node, 0, node.content.size, this.textSerializers);
@@ -231,6 +232,17 @@ export class DocumentHelper {
   ) {
     const node = DocumentHelper.toProsemirror(document);
     return ProsemirrorHelper.parseMentions(node, options);
+  }
+
+  /**
+   * Parse a list of document IDs contained in a document or revision
+   *
+   * @param document Document or Revision
+   * @returns An array of identifiers in passed document or revision
+   */
+  static parseDocumentIds(document: Document | Revision) {
+    const node = DocumentHelper.toProsemirror(document);
+    return ProsemirrorHelper.parseDocumentIds(node);
   }
 
   /**
@@ -487,9 +499,5 @@ export class DocumentHelper {
     );
   }
 
-  private static textSerializers = Object.fromEntries(
-    Object.entries(schema.nodes)
-      .filter(([, n]) => n.spec.toPlainText)
-      .map(([name, n]) => [name, n.spec.toPlainText])
-  );
+  private static textSerializers = getTextSerializers(schema);
 }

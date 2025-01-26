@@ -5,13 +5,13 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
+import Icon from "@shared/components/Icon";
 import { NavigationNode } from "@shared/types";
 import { sortNavigationNodes } from "@shared/utils/collections";
 import { DocumentValidation } from "@shared/validations";
 import Collection from "~/models/Collection";
 import Document from "~/models/Document";
 import Fade from "~/components/Fade";
-import Icon from "~/components/Icon";
 import NudeButton from "~/components/NudeButton";
 import Tooltip from "~/components/Tooltip";
 import useBoolean from "~/hooks/useBoolean";
@@ -278,7 +278,7 @@ function InnerDocumentLink(
                   !isDraggingAnyDocument ? (
                     <Fade>
                       {can.createChildDocument && (
-                        <Tooltip content={t("New doc")} delay={500}>
+                        <Tooltip content={t("New doc")}>
                           <NudeButton
                             type={undefined}
                             aria-label={t("New nested document")}
